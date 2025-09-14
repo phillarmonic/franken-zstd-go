@@ -55,7 +55,7 @@ If you prefer to build manually or integrate into your own build process:
    xcaddy build \
    --output frankenphp \
    --with github.com/dunglas/frankenphp/caddy@v1.9.1 \
-   --with github.com/phillarmonic/franken-zstd-go@1.0.1
+   --with github.com/phillarmonic/franken-zstd-go@v1.0.1
    ```
 
 3. The resulting `frankenphp` binary will include the zstd extension.
