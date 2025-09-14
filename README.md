@@ -4,7 +4,7 @@ A high-performance zstd compression extension for FrankenPHP, implemented in pur
 
 ## Overview
 
-This extension provides zstd (Zstandard) compression and decompression capabilities for PHP applications running on FrankenPHP. Unlike traditional C-based zstd extensions, this implementation leverages the pure Go compression library `github.com/klauspost/compress`, eliminating memory leaks and CGO-related issues commonly found in C implementations.
+This extension provides zstd (Zstandard) compression and decompression capabilities for PHP applications running on FrankenPHP. Unlike traditional C-based zstd extensions, this implementation leverages the pure Go compression library [github.com/klauspost/compress](https://github.com/klauspost/compress), eliminating memory leaks and CGO-related issues commonly found in C implementations.
 
 ## Key Advantages
 
