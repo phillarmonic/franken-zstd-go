@@ -10,6 +10,6 @@ import (
 )
 
 func main() {
-	log.Println("Starting FrankenPHP with zstd extension...")
+	log.Println("Starting FrankenPHP with FrankenZstd extension...")
 	cmd.Main()
 }
