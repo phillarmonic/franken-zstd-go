@@ -8,3 +8,4 @@ extern zend_module_entry zstd_module_entry;
 void register_extension();
 
 #endif
+
