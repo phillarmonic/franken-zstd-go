@@ -52,10 +52,13 @@ If you prefer to build manually or integrate into your own build process:
 2. Build FrankenPHP with the zstd extension:
    
    ```bash
+   CGO_ENABLED=1 \
+   CGO_CFLAGS="$(php-config --includes) -I/usr/local/include" \
+   CGO_LDFLAGS="$(php-config --ldflags) $(php-config --libs) -L/usr/local/lib -L/opt/homebrew/lib -lphp -lsqlite3" \
    xcaddy build \
-   --output frankenphp \
-   --with github.com/dunglas/frankenphp/caddy@v1.9.1 \
-   --with github.com/phillarmonic/franken-zstd-go@v1.0.1
+     --output frankenphp \
+     --with github.com/dunglas/frankenphp/caddy@v1.9.1 \
+     --with github.com/phillarmonic/franken-zstd-go@v1.0.1
    ```
 
 3. The resulting `frankenphp` binary will include the zstd extension.
@@ -95,7 +98,7 @@ To integrate this extension into an existing FrankenPHP project:
 1. Add the extension to your `go.mod`:
    
    ```go
-   require github.com/phillarmonic/franken-zstd-go v1.0.0
+   require github.com/phillarmonic/franken-zstd-go v1.0.1
    ```
 
 2. Import the extension in your main Go file:
