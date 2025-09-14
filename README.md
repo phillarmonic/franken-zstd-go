@@ -330,7 +330,6 @@ just web-server
 ```
 franken-zstd-go/
 ├── README.md              # This file
-├── SPECIFICATION.md       # Detailed technical specification
 ├── LICENSE               # MIT license
 ├── go.mod               # Go module definition
 ├── justfile             # Build automation
