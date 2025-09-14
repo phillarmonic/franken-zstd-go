@@ -46,6 +46,15 @@ check-extension: build
     @echo "Checking extension registration..."
     ./{{binary_output}} php-cli testdata/extension_check.php
 
+# Start web server for testing
+web-server: build
+    @echo "Starting web server on http://127.0.0.1:10000"
+    @echo "Test URLs:"
+    @echo "  - http://127.0.0.1:10000/web_test.php (Web-specific test)"
+    @echo "  - http://127.0.0.1:10000/index.php (Full test suite)"
+    @echo "Press Ctrl+C to stop"
+    cd testdata && ../{{binary_output}} run --config Caddyfile
+
 # Clean build artifacts
 clean:
     @echo "Cleaning build artifacts..."

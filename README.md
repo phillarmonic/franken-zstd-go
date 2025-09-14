@@ -39,7 +39,28 @@ This extension provides zstd (Zstandard) compression and decompression capabilit
 
 This extension is built as a FrankenPHP module and requires building a custom FrankenPHP binary that includes the zstd extension.
 
-#### Method 1: Using the Provided Build Script (Recommended)
+#### Method 1: Manual Build with xcaddy
+
+If you prefer to build manually or integrate into your own build process:
+
+1. Install xcaddy (if not already installed):
+   
+   ```bash
+   go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+   ```
+
+2. Build FrankenPHP with the zstd extension:
+   
+   ```bash
+   xcaddy build \
+   --output frankenphp \
+   --with github.com/dunglas/frankenphp/caddy@v1.9.1 \
+   --with github.com/phillarmonic/franken-zstd-go=.
+   ```
+
+3. The resulting `frankenphp` binary will include the zstd extension.
+
+#### Method 2: Using the Provided Build Script (Recommended)
 
 1. Clone the repository:
    
@@ -67,27 +88,6 @@ This command will:
    just check-extension
    ```
 
-#### Method 2: Manual Build with xcaddy
-
-If you prefer to build manually or integrate into your own build process:
-
-1. Install xcaddy (if not already installed):
-   
-   ```bash
-   go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
-   ```
-
-2. Build FrankenPHP with the zstd extension:
-   
-   ```bash
-   xcaddy build \
-   --output frankenphp \
-   --with github.com/dunglas/frankenphp/caddy@v1.9.1 \
-   --with github.com/phillarmonic/franken-zstd-go=.
-   ```
-
-3. The resulting `frankenphp` binary will include the zstd extension.
-
 #### Method 3: Integration into Existing FrankenPHP Build
 
 To integrate this extension into an existing FrankenPHP project:
@@ -114,12 +114,27 @@ Once built, you can use the FrankenPHP binary with the zstd extension:
 # Run PHP CLI with the extension
 ./frankenphp php-cli script.php
 
-# Start a web server
-./frankenphp php-server --listen :8080
-
-# Run with a Caddyfile
+# Start a web server using Caddyfile (recommended)
 ./frankenphp run --config Caddyfile
+
+# Alternative: Direct PHP server (may have module limitations)
+./frankenphp php-server --listen :8080 --root /path/to/webroot
 ```
+
+#### Web Server Testing
+
+The project includes a complete web testing setup:
+
+```bash
+# Start the web server for testing
+just web-server
+
+# This will start the server on http://127.0.0.1:10000 with test pages:
+# - http://127.0.0.1:10000/web_test.php (Web-specific test)
+# - http://127.0.0.1:10000/index.php (Full test suite)
+```
+
+**Note**: The `php-server` command may encounter module registration issues. Use the Caddyfile approach for reliable web serving.
 
 ## API Reference
 
@@ -274,8 +289,14 @@ just generate-stubs
 # Build the extension
 just build
 
-# Run tests
+# Run CLI tests
 just test
+
+# Check extension registration
+just check-extension
+
+# Start web server for testing
+just web-server
 
 # Run benchmarks
 just benchmark
@@ -286,14 +307,22 @@ just benchmark
 The extension includes comprehensive tests:
 
 - **Extension Registration**: Verifies proper loading and API availability
-- **Functionality Tests**: Tests compression/decompression with various data types
+- **CLI Functionality Tests**: Tests compression/decompression with various data types
+- **Web Interface Tests**: Browser-accessible test pages for web environments
 - **Performance Benchmarks**: Measures compression speed and ratios
 - **Memory Safety**: Validates proper resource cleanup
 
-Run all tests:
+Run all CLI tests:
 
 ```bash
 just test
+```
+
+Test web functionality:
+
+```bash
+just web-server
+# Then visit http://127.0.0.1:10000/web_test.php
 ```
 
 ### Project Structure
@@ -355,6 +384,59 @@ franken-zstd-go/
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Troubleshooting
+
+### Web Server Issues
+
+**Problem**: `Error: module not registered: http.encoders.br`
+**Solution**: Use the Caddyfile approach instead of direct `php-server`:
+
+```bash
+# Instead of: ./frankenphp php-server --listen :8080
+# Use: ./frankenphp run --config Caddyfile
+just web-server
+```
+
+**Problem**: 404 errors when accessing web pages
+**Solution**: Ensure you're starting the server from the correct directory:
+
+```bash
+cd testdata
+../frankenphp run --config Caddyfile
+```
+
+### Build Issues
+
+**Problem**: `xcaddy` not found
+**Solution**: Install xcaddy:
+
+```bash
+go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+```
+
+**Problem**: PHP headers not found during build
+**Solution**: Ensure PHP ZTS development headers are installed:
+
+```bash
+# macOS with Homebrew or Linuxbrew (use your desired version >=8.2)
+brew install shivammathur/php/php@8.4-zts
+
+# Ubuntu/Debian
+sudo apt-get install php-dev
+
+# CentOS/RHEL
+sudo yum install php-devel
+```
+
+### Extension Loading Issues
+
+**Problem**: Extension not loaded (`extension_loaded('franken-zstd-go')` returns false)
+**Solution**: Verify the extension is built into the FrankenPHP binary:
+
+```bash
+just check-extension
+```
 
 ## Contributing
 
