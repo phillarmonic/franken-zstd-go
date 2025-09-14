@@ -52,9 +52,20 @@ If you prefer to build manually or integrate into your own build process:
 2. Build FrankenPHP with the zstd extension:
    
    ```bash
-   CGO_ENABLED=1 \
-   CGO_CFLAGS="$(php-config --includes) -I/usr/local/include" \
-   CGO_LDFLAGS="$(php-config --ldflags) $(php-config --libs) -L/usr/local/lib -L/opt/homebrew/lib -lphp -lsqlite3" \
+   # Set up environment variables for cross-platform compatibility
+   export CGO_ENABLED=1
+   export CGO_CFLAGS="$(php-config --includes) -I/usr/local/include"
+   
+   # Detect Homebrew/Linuxbrew installation
+   if command -v brew >/dev/null 2>&1; then
+       BREW_PREFIX=$(brew --prefix)
+       export CGO_LDFLAGS="$(php-config --ldflags) $(php-config --libs) -L/usr/local/lib -L${BREW_PREFIX}/lib -lphp -lsqlite3"
+   else
+       # Fallback for systems without Homebrew/Linuxbrew
+       export CGO_LDFLAGS="$(php-config --ldflags) $(php-config --libs) -L/usr/local/lib -lphp -lsqlite3"
+   fi
+   
+   # Build with xcaddy
    xcaddy build \
      --output frankenphp \
      --with github.com/dunglas/frankenphp/caddy@v1.9.1 \
@@ -421,7 +432,7 @@ go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
 **Solution**: Ensure PHP ZTS development headers are installed:
 
 ```bash
-# macOS with Homebrew or Linuxbrew (use your desired version >=8.2)
+# macOS with Homebrew or Linux with Linuxbrew (use your desired version >=8.2)
 brew install shivammathur/php/php@8.4-zts
 
 # Ubuntu/Debian
@@ -429,6 +440,22 @@ sudo apt-get install php-dev
 
 # CentOS/RHEL
 sudo yum install php-devel
+
+# Windows (using WSL2 with Ubuntu)
+sudo apt-get install php-dev
+```
+
+**Problem**: `libphp` not found during linking
+**Solution**: The build script automatically detects Homebrew/Linuxbrew installations. For manual builds:
+
+```bash
+# Find your PHP library location
+php-config --prefix
+find /usr -name "libphp*" 2>/dev/null
+find $(brew --prefix 2>/dev/null || echo /usr/local) -name "libphp*" 2>/dev/null
+
+# Add the correct path to CGO_LDFLAGS
+export CGO_LDFLAGS="$(php-config --ldflags) $(php-config --libs) -L/path/to/php/lib -lphp -lsqlite3"
 ```
 
 ### Extension Loading Issues
