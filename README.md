@@ -69,7 +69,7 @@ If you prefer to build manually or integrate into your own build process:
    xcaddy build \
      --output frankenphp \
      --with github.com/dunglas/frankenphp/caddy@v1.9.1 \
-     --with github.com/phillarmonic/franken-zstd-go@v1.0.1
+     --with github.com/phillarmonic/franken-zstd-go@v1.1.0
    ```
 
 3. The resulting `frankenphp` binary will include the zstd extension.
@@ -109,7 +109,7 @@ To integrate this extension into an existing FrankenPHP project:
 1. Add the extension to your `go.mod`:
    
    ```go
-   require github.com/phillarmonic/franken-zstd-go v1.0.1
+   require github.com/phillarmonic/franken-zstd-go v1.1.0
    ```
 
 2. Import the extension in your main Go file:

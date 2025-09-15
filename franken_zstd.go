@@ -306,7 +306,7 @@ func go_quick_decompress(compressedData *C.zend_string, result **C.char, resultL
 //
 //export go_get_zstd_info
 func go_get_zstd_info(version **C.char, maxLevel, minLevel, defaultLevel *int64) {
-	*version = C.CString("1.5.6")
+	*version = C.CString("1.1.0")
 	*maxLevel = 22
 	*minLevel = 1
 	*defaultLevel = 3
