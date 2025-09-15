@@ -356,7 +356,7 @@ PHP_MINFO_FUNCTION(zstd)
 {
     php_info_print_table_start();
     php_info_print_table_header(2, "zstd support", "enabled");
-    php_info_print_table_row(2, "Extension version", "1.1.0");
+    php_info_print_table_row(2, "Extension version", "1.0.3");
     php_info_print_table_end();
 }
 
@@ -370,7 +370,7 @@ zend_module_entry zstd_module_entry = {
     NULL,
     NULL,
     PHP_MINFO(zstd),
-    "1.1.0",
+    "1.0.3",
     STANDARD_MODULE_PROPERTIES
 };
 
