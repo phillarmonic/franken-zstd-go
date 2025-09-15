@@ -83,3 +83,169 @@ deps:
     @echo "Downloading Go dependencies..."
     go mod download
     go mod tidy
+
+# Update version across all files
+update-version VERSION:
+    @echo "Updating version to {{VERSION}} across all files..."
+    @# Update zstd.c - PHP extension version info (line 359)
+    sed -i.bak 's/php_info_print_table_row(2, "Extension version", "[^"]*");/php_info_print_table_row(2, "Extension version", "{{VERSION}}");/' zstd.c
+    @# Update zstd.c - module entry version (line 373)  
+    sed -i.bak 's/"[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*",/"{{VERSION}}",/' zstd.c
+    @# Update franken_zstd.go - Go version function (line 309)
+    sed -i.bak 's/\*version = C\.CString("[^"]*")/\*version = C.CString("{{VERSION}}")/' franken_zstd.go
+    @# Update README.md - documentation examples
+    sed -i.bak 's/franken-zstd-go@v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/franken-zstd-go@v{{VERSION}}/g' README.md
+    sed -i.bak 's/franken-zstd-go v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/franken-zstd-go v{{VERSION}}/g' README.md
+    @# Clean up backup files
+    rm -f zstd.c.bak franken_zstd.go.bak README.md.bak
+    @echo "✅ Version updated to {{VERSION}} in all files"
+    @echo ""
+    @echo "Files updated:"
+    @echo "  - zstd.c (PHP extension version info)"
+    @echo "  - franken_zstd.go (Go version function)"
+    @echo "  - README.md (documentation examples)"
+    @echo ""
+    @echo "⚠️  Remember to commit these changes and create a git tag:"
+    @echo "   git add -A"
+    @echo "   git commit -m 'Bump version to {{VERSION}}'"
+    @echo "   git tag v{{VERSION}}"
+    @echo "   git push origin main --tags"
+
+# Show current version information
+show-version:
+    @echo "Current version information:"
+    @echo ""
+    @echo "📄 zstd.c (PHP extension):"
+    @grep -n "Extension version" zstd.c || echo "  Not found"
+    @grep -n '"[0-9]\+\.[0-9]\+\.[0-9]\+",' zstd.c || echo "  Not found"
+    @echo ""
+    @echo "📄 franken_zstd.go (Go function):"
+    @grep -n 'C\.CString("[0-9]\+\.[0-9]\+\.[0-9]\+")' franken_zstd.go || echo "  Not found"
+    @echo ""
+    @echo "📄 README.md (documentation):"
+    @grep -n "franken-zstd-go@v[0-9]\+\.[0-9]\+\.[0-9]\+" README.md || echo "  Not found"
+    @grep -n "franken-zstd-go v[0-9]\+\.[0-9]\+\.[0-9]\+" README.md || echo "  Not found"
+
+# Publish version with semantic versioning tags
+publish-version VERSION:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    
+    # Validate version format (x.y.z)
+    if ! echo "{{VERSION}}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+        echo "❌ Invalid version format. Expected: x.y.z (e.g., 1.2.3)"
+        exit 1
+    fi
+    
+    # Extract version components
+    FULL_VERSION="v{{VERSION}}"
+    MAJOR=$(echo "{{VERSION}}" | cut -d. -f1)
+    MINOR=$(echo "{{VERSION}}" | cut -d. -f1-2)
+    MAJOR_TAG="v${MAJOR}"
+    MINOR_TAG="v${MINOR}"
+    
+    echo "🚀 Publishing version {{VERSION}} with semantic tags..."
+    echo ""
+    echo "Tags to be created/updated:"
+    echo "  📌 Full version:  ${FULL_VERSION}"
+    echo "  📌 Minor version: ${MINOR_TAG}"
+    echo "  📌 Major version: ${MAJOR_TAG}"
+    echo ""
+    
+    # Check if we're in a git repository
+    if ! git rev-parse --git-dir > /dev/null 2>&1; then
+        echo "❌ Not in a git repository"
+        exit 1
+    fi
+    
+    # Check for uncommitted changes
+    if ! git diff-index --quiet HEAD --; then
+        echo "⚠️  You have uncommitted changes. Please commit them first."
+        echo ""
+        echo "Suggested commands:"
+        echo "  git add -A"
+        echo "  git commit -m 'Bump version to {{VERSION}}'"
+        echo ""
+        read -p "Continue anyway? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "❌ Aborted"
+            exit 1
+        fi
+    fi
+    
+    # Create/update full version tag
+    echo "📌 Creating full version tag: ${FULL_VERSION}"
+    git tag -f "${FULL_VERSION}" -m "Release version {{VERSION}}"
+    
+    # Create/update minor version tag (force update if exists)
+    echo "📌 Creating/updating minor version tag: ${MINOR_TAG}"
+    if git tag -l | grep -q "^${MINOR_TAG}$"; then
+        echo "   ↳ Updating existing minor tag"
+        git tag -f "${MINOR_TAG}" -m "Latest {{VERSION}} in ${MINOR}.x series"
+    else
+        echo "   ↳ Creating new minor tag"
+        git tag "${MINOR_TAG}" -m "Latest {{VERSION}} in ${MINOR}.x series"
+    fi
+    
+    # Create/update major version tag (force update if exists)
+    echo "📌 Creating/updating major version tag: ${MAJOR_TAG}"
+    if git tag -l | grep -q "^${MAJOR_TAG}$"; then
+        echo "   ↳ Updating existing major tag"
+        git tag -f "${MAJOR_TAG}" -m "Latest {{VERSION}} in ${MAJOR}.x.x series"
+    else
+        echo "   ↳ Creating new major tag"
+        git tag "${MAJOR_TAG}" -m "Latest {{VERSION}} in ${MAJOR}.x.x series"
+    fi
+    
+    echo ""
+    echo "✅ Tags created successfully!"
+    echo ""
+    echo "📋 Summary:"
+    echo "  • ${FULL_VERSION}  - Exact version {{VERSION}}"
+    echo "  • ${MINOR_TAG}     - Latest in {{VERSION}} series (moves with patches)"
+    echo "  • ${MAJOR_TAG}      - Latest in ${MAJOR}.x.x series (moves with minor/patch)"
+    echo ""
+    echo "🚀 To push tags to remote:"
+    echo "   git push origin --tags"
+    echo ""
+    echo "🔍 To view all tags:"
+    echo "   git tag -l | sort -V"
+
+# Show current git tags
+show-tags:
+    #!/usr/bin/env bash
+    echo "📋 Current git tags (sorted by version):"
+    echo ""
+    if git tag -l | grep -q .; then
+        git tag -l | sort -V | while read tag; do
+            commit_hash=$(git rev-list -n 1 $tag 2>/dev/null || echo "invalid")
+            commit_date=$(git log -1 --format="%ci" $tag 2>/dev/null || echo "unknown")
+            printf "  %-12s %s (%s)\n" "$tag" "$commit_hash" "${commit_date%% *}"
+        done
+    else
+        echo "  No tags found"
+    fi
+    echo ""
+    echo "💡 Use 'just publish-version x.y.z' to create semantic version tags"
+
+# Complete release workflow
+release VERSION:
+    @echo "🎯 Complete release workflow for version {{VERSION}}"
+    @echo ""
+    just update-version {{VERSION}}
+    @echo ""
+    @echo "📝 Files updated. Please review the changes:"
+    just show-version
+    @echo ""
+    @read -p "Commit these changes? (Y/n): " -n 1 -r; \
+    echo; \
+    if [[ ! $$REPLY =~ ^[Nn]$$ ]]; then \
+        git add -A && \
+        git commit -m "Bump version to {{VERSION}}" && \
+        echo "✅ Changes committed"; \
+    else \
+        echo "⏭️  Skipping commit"; \
+    fi
+    @echo ""
+    just publish-version {{VERSION}}
